@@ -16,19 +16,19 @@ extension MathSymbolContentType : VisualPartConvertible {
         
         let dh = b.height / 10
         let dw = b.width / 8
-        p.moveToPoint(NSPoint(x: b.minX, y: b.minY + dh))
+        p.move(to: NSPoint(x: b.minX, y: b.minY + dh))
         
         let ep = NSPoint(x: b.midX, y: b.minY + dh)
         let cp1 = NSPoint(x: b.minX + dw, y: b.minY)
         let cp2 = NSPoint(x: b.midX - dw, y: b.minY)
-        p.curveToPoint(ep, controlPoint1: cp1, controlPoint2: cp2)
-        p.lineToPoint(NSPoint(x: b.midX, y: b.maxY - dh))
+        p.curve(to: ep, controlPoint1: cp1, controlPoint2: cp2)
+        p.line(to: NSPoint(x: b.midX, y: b.maxY - dh))
         
         let ep2 = NSPoint(x: b.maxX, y: b.maxY - dh)
         let cp21 = NSPoint(x: b.midX + dw, y: b.maxY)
         let cp22 = NSPoint(x: b.maxX - dw, y: b.maxY)
         
-        p.curveToPoint(ep2, controlPoint1: cp21, controlPoint2: cp22)
+        p.curve(to: ep2, controlPoint1: cp21, controlPoint2: cp22)
         return p
     }
     
@@ -51,7 +51,7 @@ extension MathSymbolContentType : VisualPartConvertible {
             
             let space = VisualPart.Spacer(frame: ElementSize(width: 2, height: 2, realWidth: 2, baseline: 1, xHeight: 1))
             let symbol = VisualPart.Shape(type: ShapeType.Path(points: path), frame: fs, style: style)
-            return VisualPart.sequence([symbol,space], withStyle: style)
+            return VisualPart.sequence(parts: [symbol,space], withStyle: style)
        
         case .Integral:
             let font = style.displayFont()
@@ -72,22 +72,22 @@ extension MathSymbolContentType : VisualPartConvertible {
             
         case let MathSymbolContentType.Text(text: t) :
             let f = VisualPart.textSize(forText: t, withFont: font)
-            return VisualPart.Text(t: t, frame: f, style: style.italisised(true))
+            return VisualPart.Text(t: t, frame: f, style: style.italisised(i: true))
             
         case let MathSymbolContentType.Operator(op: op) :
             let f = VisualPart.textSize(forText: op, withFont: font)
             let space = VisualPart.Spacer(frame: ElementSize(width: 3, height: 2, realWidth: 3, baseline: 1, xHeight: 1))
             let part = VisualPart.Text(t: op, frame: f, style: style)
-            return VisualPart.sequence([space,part,space], withStyle: style)
+            return VisualPart.sequence(parts: [space,part,space], withStyle: style)
             
         case let MathSymbolContentType.Symbol(mt) :
-            return symbolPart(mt, withStyle: style)
+            return symbolPart(type: mt, withStyle: style)
             
         case let MathSymbolContentType.Function(type: ft) :
             let f = VisualPart.textSize(forText: ft.rawValue, withFont: font)
             let space = VisualPart.Spacer(frame: ElementSize(width: 3, height: f.height, realWidth: 3, baseline: f.baseline, xHeight: f.xHeight))
             let part = VisualPart.Text(t: ft.rawValue, frame: f, style: style)
-            return VisualPart.sequence([part,space], withStyle: style)
+            return VisualPart.sequence(parts: [part,space], withStyle: style)
         }
     }
 }
@@ -99,33 +99,33 @@ extension MathSymbol : VisualPartConvertible {
         let subpart = symSubscript?.build(withStyle: sopt)
         let suppart = symSuperscript?.build(withStyle: sopt)
         
-        if shouldInline(style.inline) {
+        if shouldInline(inline: style.inline) {
             let font = style.displayFont()
             switch (subpart,suppart) {
-            case (.None,.None) : return node
-            case let (s?,.None) :
+            case (nil,nil) : return node
+            case let (s?,nil) :
                 let f = node.frame
                 let spch = f.height - f.baseline - font.xHeight / 2
-                let spc = VisualPart.spacer(1, height: spch)
-                let st = VisualPart.stack([spc,s], withStyle: style)
-                return VisualPart.sequence([node,st], withStyle: style)
-            case let (.None,s?) :
+                let spc = VisualPart.spacer(width: 1, height: spch)
+                let st = VisualPart.stack(parts: [spc,s], withStyle: style)
+                return VisualPart.sequence(parts: [node,st], withStyle: style)
+            case let (nil,s?) :
                 let f = node.frame
                 let spch = f.baseline + font.xHeight / 2
-                let spc = VisualPart.spacer(1, height: spch)
-                let st = VisualPart.stack([s,spc], withStyle: style)
-                return VisualPart.sequence([node,st], withStyle: style)
+                let spc = VisualPart.spacer(width: 1, height: spch)
+                let st = VisualPart.stack(parts: [s,spc], withStyle: style)
+                return VisualPart.sequence(parts: [node,st], withStyle: style)
             case let (subn?,supn?) :
-                let st = VisualPart.stack([supn,subn], withStyle: style)
-                return VisualPart.sequence([node,st], withStyle: style)
+                let st = VisualPart.stack(parts: [supn,subn], withStyle: style)
+                return VisualPart.sequence(parts: [node,st], withStyle: style)
             }
         }
         else {
             switch (subpart,suppart) {
-            case (.None,.None) : return node
-            case let (s?,.None) : return VisualPart.under(s, base: node, withStyle: style)
-            case let (.None,s?) : return VisualPart.over(s, base: node, withStyle: style)
-            case let (subn?,supn?) : return VisualPart.stack([supn,node,subn], withStyle: style)
+            case (nil,nil) : return node
+            case let (s?,nil) : return VisualPart.under(item: s, base: node, withStyle: style)
+            case let (nil,s?) : return VisualPart.over(item: s, base: node, withStyle: style)
+            case let (subn?,supn?) : return VisualPart.stack(parts: [supn,node,subn], withStyle: style)
             }
         }
     }
@@ -137,11 +137,11 @@ extension MathExpr : VisualPartConvertible {
     func build(withStyle style: VisualStyle) -> VisualPart {
         switch self {
         case let .Symbol(s) : return s.build(withStyle: style)
-        case let .Fraction(num,den) : return MathExpr.fraction(num, den: den, withStyle: style)
-        case let .Sequence(exprs) : return MathExpr.mathSequence(exprs, withStyle: style)
-        case let .Binomial(ne,ke) : return MathExpr.binomial(ne, ke: ke, withStyle: style)
-        case let .Root(oe,ex) : return MathExpr.root(oe, ex: ex, withStyle: style)
-        case let .Bracketed(lsym,expr,rsym) : return MathExpr.bracketed(lsym, expr: expr, rsym: rsym, withStyle: style)
+        case let .Fraction(num,den) : return MathExpr.fraction(num: num, den: den, withStyle: style)
+        case let .Sequence(exprs) : return MathExpr.mathSequence(exprs: exprs, withStyle: style)
+        case let .Binomial(ne,ke) : return MathExpr.binomial(ne: ne, ke: ke, withStyle: style)
+        case let .Root(oe,ex) : return MathExpr.root(oe: oe, ex: ex, withStyle: style)
+        case let .Bracketed(lsym,expr,rsym) : return MathExpr.bracketed(lsym: lsym, expr: expr, rsym: rsym, withStyle: style)
         }
     }
     
@@ -161,26 +161,26 @@ extension MathExpr : VisualPartConvertible {
         
         let pad1 = w - nf.width
         if pad1 > 0 {
-            numv = VisualPart.padded(numv, left: pad1/2, right: pad1/2, top: 0, bottom: 0, style: style)
+            numv = VisualPart.padded(item: numv, left: pad1/2, right: pad1/2, top: 0, bottom: 0, style: style)
         }
         
         let pad2 = w - df.width
         if pad2 > 0 {
-            denv = VisualPart.padded(denv, left: pad2/2, right: pad2/2, top: 0, bottom: 0, style: style)
+            denv = VisualPart.padded(item: denv, left: pad2/2, right: pad2/2, top: 0, bottom: 0, style: style)
         }
         
-        return VisualPart.stack([numv,ln,denv], withStyle: style)
+        return VisualPart.stack(parts: [numv,ln,denv], withStyle: style)
     }
     
     static func binomial(ne: MathExpr, ke: MathExpr, withStyle style: VisualStyle) -> VisualPart {
         let n1 = ne.build(withStyle: style)
         let n2 = ke.build(withStyle: style)
-        return VisualPart.stack([n1,n2], withStyle: style)
+        return VisualPart.stack(parts: [n1,n2], withStyle: style)
     }
     
     static func mathSequence(exprs: [MathExpr], withStyle style: VisualStyle) -> VisualPart {
-        let ve = exprs.map {$0.build(withStyle: style.framed(false))}
-        return VisualPart.sequence(ve, withStyle: style)
+        let ve = exprs.map {$0.build(withStyle: style.framed(f: false))}
+        return VisualPart.sequence(parts: ve, withStyle: style)
     }
 
     static func root(oe: MathExpr?, ex: MathExpr, withStyle style: VisualStyle) -> VisualPart {
@@ -188,11 +188,11 @@ extension MathExpr : VisualPartConvertible {
         let root = ex.build(withStyle: style)
         let rf = root.frame
         
-        let ln1p = VisualPart.line(NSPoint(x: 0, y: 0), ep: NSPoint(x: rf.width, y: 0), fr: ElementSize(width: rf.width, height: 1, realWidth: rf.width, baseline: 0, xHeight: 0), withStyle: style)
-        let s1 = VisualPart.over(ln1p, base: root, withStyle: style)
+        let ln1p = VisualPart.line(sp: NSPoint(x: 0, y: 0), ep: NSPoint(x: rf.width, y: 0), fr: ElementSize(width: rf.width, height: 1, realWidth: rf.width, baseline: 0, xHeight: 0), withStyle: style)
+        let s1 = VisualPart.over(item: ln1p, base: root, withStyle: style)
         
         let f2 = s1.frame
-        let ln2p = VisualPart.line( NSPoint(x: 0, y: 0), ep: NSPoint(x: 10, y: rf.height), fr: ElementSize(width: 10, height: f2.height , realWidth: 10, baseline: f2.baseline , xHeight: f2.xHeight), withStyle: style)
+        let ln2p = VisualPart.line( sp: NSPoint(x: 0, y: 0), ep: NSPoint(x: 10, y: rf.height), fr: ElementSize(width: 10, height: f2.height , realWidth: 10, baseline: f2.baseline , xHeight: f2.xHeight), withStyle: style)
         
         if let d = degree {
             let sp = NSPoint(x: d.frame.width, y: 0)
@@ -201,12 +201,12 @@ extension MathExpr : VisualPartConvertible {
             let lf = ElementSize(width: 10, height: rf.height * 0.3 , realWidth: 10, baseline: f2.baseline , xHeight: 0)
             let sh = ShapeType.Path(points: [sp,mp,ep])
             let ln3p = VisualPart.Shape(type: sh, frame: lf, style: style)
-            let s2 = VisualPart.over(d, base: ln3p, withStyle: style)
-            return VisualPart.sequence([s2,ln2p,s1], withStyle: style)
+            let s2 = VisualPart.over(item: d, base: ln3p, withStyle: style)
+            return VisualPart.sequence(parts: [s2,ln2p,s1], withStyle: style)
         }
         else {
-            let ln3p = VisualPart.line(NSPoint(x: 10, y: 0), ep: NSPoint(x: 0, y: rf.height * 0.3), fr: ElementSize(width: 10, height: f2.height , realWidth: 10, baseline: f2.baseline , xHeight: f2.xHeight), withStyle: style)
-            return VisualPart.sequence([ln3p,ln2p,s1], withStyle: style)
+            let ln3p = VisualPart.line(sp: NSPoint(x: 10, y: 0), ep: NSPoint(x: 0, y: rf.height * 0.3), fr: ElementSize(width: 10, height: f2.height , realWidth: 10, baseline: f2.baseline , xHeight: f2.xHeight), withStyle: style)
+            return VisualPart.sequence(parts: [ln3p,ln2p,s1], withStyle: style)
         }
     }
     
@@ -217,16 +217,16 @@ extension MathExpr : VisualPartConvertible {
         
         func shape(sym: MathBracketSymbol, ofSize s: ElementSize) -> ShapeType {
             switch sym {
-            case .LParen : return MathExpr.leftParen(s)
-            case .RParen : return MathExpr.rightParen(s)
+            case .LParen : return MathExpr.leftParen(f: s)
+            case .RParen : return MathExpr.rightParen(f: s)
             }
         }
         
-        let lb = shape(lsym, ofSize: bf)
-        let rb = shape(rsym, ofSize: bf)
+        let lb = shape(sym: lsym, ofSize: bf)
+        let rb = shape(sym: rsym, ofSize: bf)
         let lbv = VisualPart.Shape(type: lb, frame: bf, style: style)
         let rbv = VisualPart.Shape(type: rb, frame: bf, style: style)
-        return VisualPart.sequence([lbv,exv,rbv], withStyle: style)
+        return VisualPart.sequence(parts: [lbv,exv,rbv], withStyle: style)
     }
     
     static func leftParen(f: ElementSize) -> ShapeType {

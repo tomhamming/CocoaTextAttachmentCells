@@ -9,7 +9,7 @@
 import Cocoa
 
 extension String {
-    func size(withAttributes attrs: [String:AnyObject], constrainedTo box: NSSize, padding: CGFloat = 0.0) -> NSSize {
+    func size(withAttributes attrs: [NSAttributedString.Key : Any], constrainedTo box: NSSize, padding: CGFloat = 0.0) -> NSSize {
         let storage = NSTextStorage(string: self)
         let container = NSTextContainer(containerSize: NSSize(width: box.width, height: box.height))
         let layout = NSLayoutManager()
@@ -17,8 +17,8 @@ extension String {
         storage.addLayoutManager(layout)
         storage.addAttributes(attrs, range: NSMakeRange(0, storage.length))
         container.lineFragmentPadding = padding
-        let _ = layout.glyphRangeForTextContainer(container)
-        let ur = layout.usedRectForTextContainer(container)
+        let _ = layout.glyphRange(for: container)
+        let ur = layout.usedRect(for: container)
         
         return NSSize(width: ur.width, height: ur.height)
     }

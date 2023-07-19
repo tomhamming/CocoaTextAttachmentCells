@@ -171,13 +171,13 @@ indirect enum MathExpr {
         else {
             ct = MathSymbolContentType.Text(text: value)
         }
-        let a = MathSymbol(symbol: ct , symSubscript: .None, symSuperscript: .None)
+        let a = MathSymbol(symbol: ct , symSubscript: .none, symSuperscript: .none)
         self = MathExpr.Symbol(sym: a)
     }
 }
 
 
-extension MathExpr : StringLiteralConvertible {
+extension MathExpr : ExpressibleByStringLiteral {
     typealias ExtendedGraphemeClusterLiteralType = StringLiteralType
     typealias UnicodeScalarLiteralType = StringLiteralType
     
@@ -194,7 +194,7 @@ extension MathExpr : StringLiteralConvertible {
     }
 }
 
-extension MathExpr : ArrayLiteralConvertible {
+extension MathExpr : ExpressibleByArrayLiteral {
     init(arrayLiteral elements: MathExpr...) {
         self = MathExpr.Sequence(exprs: elements)
     }

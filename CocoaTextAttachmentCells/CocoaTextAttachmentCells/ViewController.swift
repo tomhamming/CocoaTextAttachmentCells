@@ -13,9 +13,10 @@ class ViewController: NSViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        editor.delegate = self
         
-        let font = NSFont.systemFontOfSize(18)
-        let attr = NSMutableAttributedString(string: "", attributes: [NSForegroundColorAttributeName:NSColor.blackColor(), NSFontAttributeName:font])
+        let font = NSFont.systemFont(ofSize: 10)
+        let attr = NSMutableAttributedString(string: "", attributes: [.foregroundColor :NSColor.labelColor, .font:font])
 
         // Build the display element part
         let mathStyle = VisualStyle(fontSize: 18, drawFrame: false, inline: false, italic: false, bold: false)
@@ -44,14 +45,21 @@ class ViewController: NSViewController {
             cell.attachmentCell = inline
             let cellstr = NSAttributedString(attachment: cell)
             
-            attr.appendAttributedString(pre)
-            attr.appendAttributedString(cellstr)
-            attr.appendAttributedString(post)
+            attr.append(pre)
+            attr.append(cellstr)
+            attr.append(post)
+            attr.addAttribute(.foregroundColor, value: NSColor.labelColor, range: NSRange(location: 0, length: attr.length))
         }
         
-        editor.textStorage?.replaceCharactersInRange(NSRange(location: 0, length: 0), withAttributedString: attr)
+        editor.textStorage?.replaceCharacters(in: NSRange(location: 0, length: 0), with: attr)
     }
 
    
+}
+
+extension ViewController : NSTextViewDelegate {
+    func textView(_ textView: NSTextView, clickedOn cell: NSTextAttachmentCellProtocol, in cellFrame: NSRect, at charIndex: Int) {
+        print("Clicked")
+    }
 }
 

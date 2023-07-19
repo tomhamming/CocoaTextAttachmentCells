@@ -28,14 +28,14 @@ extension VisualElementLayoutHandler where Self : VisualElementRenderer {
     func layout(part: VisualPart, x: CGFloat, y: CGFloat, containerSize cs: ElementSize, withStyle style: VisualStyle) {
         if style.drawFrame {
             let frame = part.frame
-            box(NSPoint(x: x, y: y), size: NSSize(width: frame.width, height: frame.height), withStyle: style)
+            box(origin: NSPoint(x: x, y: y), size: NSSize(width: frame.width, height: frame.height), withStyle: style)
         }
         
         switch part {
         case .Spacer(_) : () // Spacer has no layout
 
         case let .Text(t,_,style) :
-            text(t, atPoint: NSPoint(x: x, y: y), withStyle: style)
+            text(text: t, atPoint: NSPoint(x: x, y: y), withStyle: style)
             
         case let .Sequence(items,frame,style):
             let sb = frame.baseline
@@ -45,36 +45,36 @@ extension VisualElementLayoutHandler where Self : VisualElementRenderer {
                 let pf = i.frame
                 let b = pf.baseline
                 let ypos = y + (sb - b)
-                layout(i, x: xpos, y: ypos,containerSize: frame, withStyle: style)
+                layout(part: i, x: xpos, y: ypos,containerSize: frame, withStyle: style)
                 xpos += pf.width
             }
             
         case let .Padded(item,left,_,_,bottom,_,pstyle) :
-            layout(item, x: x + left, y: y + bottom, containerSize: part.frame, withStyle: pstyle)
+            layout(part: item, x: x + left, y: y + bottom, containerSize: part.frame, withStyle: pstyle)
 
         case let .Pair(item,position,base,frame,style) :
             switch position {
             case .Over:
-                layout(base, x: x, y: y, containerSize: frame, withStyle: style)
-                layout(item, x: x, y: y + base.frame.height, containerSize: frame, withStyle: style)
+                layout(part: base, x: x, y: y, containerSize: frame, withStyle: style)
+                layout(part: item, x: x, y: y + base.frame.height, containerSize: frame, withStyle: style)
             case .Under:
                 let of = item.frame
-                layout(base, x: x, y: y + of.height, containerSize: frame, withStyle: style)
-                layout(item, x: x, y: y, containerSize: frame, withStyle: style)
+                layout(part: base, x: x, y: y + of.height, containerSize: frame, withStyle: style)
+                layout(part: item, x: x, y: y, containerSize: frame, withStyle: style)
               
             }
             
         case let .Stack(items,frame,style) :
             // items top to bottom
             var ypos = y
-            for i in items.reverse() {
-                layout(i, x: x, y: ypos, containerSize: frame, withStyle: style)
+            for i in items.reversed() {
+                layout(part: i, x: x, y: ypos, containerSize: frame, withStyle: style)
                 ypos += i.frame.height
             }
             
         case let .Shape(type,frame,style) :
             let b = NSRect(x: x, y: y, width: frame.width, height: frame.height)
-            shape(type, frame: b, withStyle: style)
+            shape(type: type, frame: b, withStyle: style)
         }
     }
 }

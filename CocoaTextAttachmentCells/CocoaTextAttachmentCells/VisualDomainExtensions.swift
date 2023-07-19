@@ -11,7 +11,7 @@ import Cocoa
 /// Helper to provide information on visual elements
 extension VisualPart {
     static func textSize(forText symbol: String, withFont font: NSFont) -> ElementSize {
-        let displaySize = symbol.size(withAttributes: [NSFontAttributeName:font], constrainedTo: NSSize(width: 5000, height: 5000), padding: 0.0)
+        let displaySize = symbol.size(withAttributes: [.font: font], constrainedTo: NSSize(width: 5000, height: 5000), padding: 0.0)
         let h = max(displaySize.height, font.ascender + fabs(font.descender))
         return ElementSize(width: displaySize.width, height: h, realWidth: displaySize.width, baseline: fabs(font.descender), xHeight: font.xHeight)
     }
@@ -33,17 +33,17 @@ extension VisualPart {
         return VisualPart.Shape(type: lns, frame: fr, style: style)
     }
     
-    static func sequence(parts: [VisualPart], withStyle style: VisualStyle, withSpacing spc: CGFloat? = .None) -> VisualPart {
+    static func sequence(parts: [VisualPart], withStyle style: VisualStyle, withSpacing spc: CGFloat? = nil) -> VisualPart {
         guard parts.count > 0 else {return VisualPart.Sequence(items: [], frame: ElementSize.zero , style: style)}
         
         var elements = parts
         if let s = spc {
-            let spacer = VisualPart.spacer(s, height: 0)
-            elements = elements.intersperse(spacer)
+            let spacer = VisualPart.spacer(width: s, height: 0)
+            elements = elements.intersperse(e: spacer)
         }
         
         let font = style.displayFont()
-        let (w,a,b) = elements.reduce((0,0,0), combine: { (a, p) -> (CGFloat,CGFloat,CGFloat) in
+        let (w,a,b) = elements.reduce((0,0,0), { (a, p) -> (CGFloat,CGFloat,CGFloat) in
             let f = p.frame
             let asc = f.height - f.baseline
             return (a.0 + f.width, max(a.1,asc), max(a.2,f.baseline))
@@ -55,7 +55,7 @@ extension VisualPart {
     
     static func stack(parts : [VisualPart], withStyle style: VisualStyle) -> VisualPart {
         func height(ofSlice s: Range<Int>) -> CGFloat {
-            return parts[s].reduce(0, combine: { (a, p) -> CGFloat in
+            return parts[s].reduce(0, { (a, p) -> CGFloat in
                 let f = p.frame
                 return a + f.height
             })
@@ -66,7 +66,7 @@ extension VisualPart {
         case 1: return parts[0]
         case let n:
             let font = style.displayFont()
-            let (w,h) = parts.reduce((0,0), combine: { (a, p) -> (CGFloat,CGFloat) in
+            let (w,h) = parts.reduce((0,0), { (a, p) -> (CGFloat,CGFloat) in
                 let f = p.frame
                 return (max(a.0, f.width), a.1 + f.height)
             })
@@ -78,7 +78,7 @@ extension VisualPart {
             }
             else {
                 let f = parts[mid].frame
-                bs = height(ofSlice: mid.successor()..<n) + f.baseline
+                bs = height(ofSlice: mid+1..<n) + f.baseline
             }
             
             let frame = ElementSize(width: w, height: h, realWidth: w, baseline: bs, xHeight: font.xHeight)
@@ -116,11 +116,11 @@ extension VisualPart {
     }
     
     static func under(item: VisualPart, base: VisualPart, withStyle style: VisualStyle) -> VisualPart {
-        return pair(item, positioning: .Under, base: base, withStyle: style)
+        return pair(item: item, positioning: .Under, base: base, withStyle: style)
     }
     
     static func over(item: VisualPart, base: VisualPart, withStyle style: VisualStyle) -> VisualPart {
-        return pair(item, positioning: .Over, base: base, withStyle: style)
+        return pair(item: item, positioning: .Over, base: base, withStyle: style)
     }
 
 }
@@ -159,18 +159,18 @@ extension VisualStyle {
     func displayFont() -> NSFont {
         var traits : NSFontTraitMask = NSFontTraitMask()
         if italic {
-            traits.insert(NSFontTraitMask.ItalicFontMask)
+            traits.insert(NSFontTraitMask.italicFontMask)
         }
         
         if bold {
-            traits.insert(NSFontTraitMask.BoldFontMask)
+            traits.insert(NSFontTraitMask.boldFontMask)
         }
         
-        let fm = NSFontManager.sharedFontManager()
-        if let fnt = fm.fontWithFamily("Times New Roman", traits: traits, weight: 1, size: fontSize) {
+        let fm = NSFontManager.shared
+        if let fnt = fm.font(withFamily: "Times New Roman", traits: traits, weight: 1, size: fontSize) {
             return fnt
         }
         
-        return NSFont.systemFontOfSize(fontSize)
+        return NSFont.systemFont(ofSize: fontSize)
     }
 }
